@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
@@ -18,6 +19,24 @@ func init() {
 	_ = json.Unmarshal(file, &recipes)
 }
 
+func findRecipeIndexByID(id string) int {
+	index := -1
+	for i := 0; i < len(recipes); i++ {
+		if recipes[i].ID == id {
+			index = i
+		}
+	}
+	return index
+}
+
+func findRecipeByID(id string) (*Recipe, error) {
+	index := findRecipeIndexByID(id)
+	if index == -1 {
+		return nil, errors.New("recipe not found")
+	}
+	return &(recipes[index]), nil
+}
+
 func main() {
 	router := gin.Default()
 	fmt.Println("serving on http://localhost:8080/")
@@ -26,6 +45,7 @@ func main() {
 	router.GET("/recipes", ListRecipeHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
 	router.DELETE("/recipes/:id", DeleteRecipeHandler)
+	router.GET("/recipes/:id", GetRecipeHandler)
 	router.Run()
 }
 
@@ -62,6 +82,17 @@ func NewRecipeHandler(c *gin.Context) {
 	recipe.PublishedAt = time.Now()
 
 	recipes = append(recipes, recipe)
+	c.JSON(http.StatusOK, recipe)
+}
+
+func GetRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	recipe, err := findRecipeByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, recipe)
 }
 
