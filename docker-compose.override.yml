@@ -1,0 +1,17 @@
+version: '3.7'
+
+#secrets:
+#  mongo_password:
+#    external: true
+
+services:
+  mongodb_container:
+    image: mongo:latest
+#    secrets:
+#      - mongo_password
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+#      MONGO_INITDB_ROOT_PASSWORD: /run/secrets/mongodb_password
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
