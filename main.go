@@ -71,15 +71,29 @@ func main() {
 	fmt.Println("serving on http://localhost:8080/")
 }
 
-// swagger:parameters recipes newRecipe
 type Recipe struct {
 	//swagger:ignore
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Tags         []string  `json:"tags"`
-	Ingredients  []string  `json:"ingredients"`
-	Instructions []string  `json:"instructions"`
-	PublishedAt  time.Time `json:"publishedAt"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Tags         []string `json:"tags"`
+	Ingredients  []string `json:"ingredients"`
+	Instructions []string `json:"instructions"`
+	//swagger:ignore
+	PublishedAt time.Time `json:"publishedAt"`
+}
+
+// swagger:parameters newRecipe
+type CreateRecipe struct {
+	// in: body
+	Body *Recipe
+}
+
+//swagger:parameters updateRecipe
+type UpdateRecipe struct {
+	// in: body
+	Body *Recipe
+	// in: path
+	Id int `json:"id"`
 }
 
 // swagger:operation GET / index indexPage
@@ -115,6 +129,7 @@ func ListRecipeHandler(c *gin.Context) {
 // ---
 // produces:
 // - application/json
+//
 // responses:
 //
 //	'200':
@@ -170,12 +185,6 @@ func GetRecipeHandler(c *gin.Context) {
 // swagger:operation PUT /recipes/{id} recipes updateRecipe
 // Update an existing recipe
 // ---
-// parameters:
-//   - name: id
-//     in: path
-//     description: ID of the recipe
-//     required: true
-//     type: string
 //
 // produces:
 // - application/json
