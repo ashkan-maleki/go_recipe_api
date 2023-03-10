@@ -22,8 +22,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/xid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -82,7 +82,8 @@ func init() {
 func findRecipeIndexByID(id string) int {
 	index := -1
 	for i := 0; i < len(recipes); i++ {
-		if recipes[i].ID == id {
+		//if recipes[i].ID == id {
+		if recipes[i].ID.String() == id {
 			index = i
 		}
 	}
@@ -112,11 +113,11 @@ func main() {
 
 type Recipe struct {
 	//swagger:ignore
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Tags         []string `json:"tags"`
-	Ingredients  []string `json:"ingredients"`
-	Instructions []string `json:"instructions"`
+	ID           primitive.ObjectID `json:"id" bson:"_id"`
+	Name         string             `json:"name" bson:"name"`
+	Tags         []string           `json:"tags" bson:"tags"`
+	Ingredients  []string           `json:"ingredients" bson:"ingredients"`
+	Instructions []string           `json:"instructions" bson:"instructions"`
 	//swagger:ignore
 	PublishedAt time.Time `json:"publishedAt"`
 }
@@ -205,10 +206,17 @@ func NewRecipeHandler(c *gin.Context) {
 		return
 	}
 
-	recipe.ID = xid.New().String()
+	recipe.ID = primitive.NewObjectID()
 	recipe.PublishedAt = time.Now()
 
-	recipes = append(recipes, recipe)
+	_, err = collection.InsertOne(ctx, recipe)
+
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while inserting a new recipe"})
+		return
+	}
+
 	c.JSON(http.StatusOK, recipe)
 }
 
@@ -265,7 +273,8 @@ func UpdateRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	index := -1
 	for i := 0; i < len(recipes); i++ {
-		if recipes[i].ID == id {
+		//if recipes[i].ID == id {
+		if recipes[i].ID.String() == id {
 			index = i
 		}
 	}
@@ -274,7 +283,8 @@ func UpdateRecipeHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
-	recipe.ID = id
+	//recipe.ID = id
+	recipe.ID = primitive.NewObjectID()
 	recipes[index] = recipe
 	c.JSON(http.StatusOK, recipe)
 }
@@ -302,7 +312,8 @@ func DeleteRecipeHandler(c *gin.Context) {
 	index := -1
 
 	for i := 0; i < len(recipes); i++ {
-		if recipes[i].ID == id {
+		//if recipes[i].ID == id {
+		if recipes[i].ID.String() == id {
 			index = i
 		}
 	}
