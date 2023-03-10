@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -37,6 +38,7 @@ var recipes []Recipe
 var ctx context.Context
 var err error
 var client *mongo.Client
+var collection *mongo.Collection
 
 // mongodb://admin:password@127.0.0.1:27017/
 const mongoUri = "mongodb://admin:password@127.0.0.1:27017/"
@@ -58,15 +60,15 @@ func init() {
 	}
 
 	log.Println("Connected to MongoDb")
-
+	//collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	collection = client.Database(mongoDatabase).Collection("recipes")
 	//var listOfRecipes []interface{}
 	//
 	//for _, recipe := range recipes {
 	//	listOfRecipes = append(listOfRecipes, recipe)
 	//}
 	//
-	////collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
-	//collection := client.Database(mongoDatabase).Collection("recipes")
+
 	//
 	//insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	//
@@ -158,6 +160,26 @@ func IndexHandler(c *gin.Context) {
 //	'200':
 //	    description: Successful operation
 func ListRecipeHandler(c *gin.Context) {
+	cur, err := collection.Find(ctx, bson.M{})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	defer cur.Close(ctx)
+
+	recipes := make([]Recipe, 0)
+	for cur.Next(ctx) {
+		var recipe Recipe
+		err := cur.Decode(&recipe)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		recipes = append(recipes, recipe)
+	}
+
 	c.JSON(http.StatusOK, recipes)
 }
 
