@@ -2,3 +2,9 @@ version: '3.7'
 services:
   mongodb_container:
     image: mongo:latest
+
+  redis_container:
+    image: redis:latest
+
+  redis_insight_container:
+    image: redislabs/redisinsight:latest
