@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/mamalmaleki/go_recipe_api/handlers"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -37,10 +38,6 @@ const mongoDatabase = "demo"
 // MONGO_URI="mongodb://admin:password@127.0.0.1:27017/" MONGO_DATABASE=demo go run main.go
 
 func init() {
-	//recipes = make([]Recipe, 0)
-	//file, _ := os.ReadFile("recipe.json")
-	//_ = json.Unmarshal(file, &recipes)
-
 	ctx := context.Background()
 	//client, err = mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoUri))
@@ -52,14 +49,20 @@ func init() {
 	log.Println("Connected to MongoDb")
 	//collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
 	collection := client.Database(mongoDatabase).Collection("recipes")
-	recipeHandler = handlers.NewRecipesHandler(ctx, collection)
+
+	// begin
+
+	//recipes := make([]models.Recipe, 0)
+	//file, _ := os.ReadFile("recipe.json")
+	//err = json.Unmarshal(file, &recipes)
+	//
 	//var listOfRecipes []interface{}
 	//
 	//for _, recipe := range recipes {
 	//	listOfRecipes = append(listOfRecipes, recipe)
 	//}
 	//
-
+	//log.Println(fmt.Printf("number of recipes: %v", err))
 	//
 	//insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	//
@@ -68,6 +71,18 @@ func init() {
 	//}
 	//
 	//log.Println(fmt.Printf("Inserted recipes: %v", len(insertManyResult.InsertedIDs)))
+
+	// end
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	status := redisClient.Ping(ctx)
+	log.Println(status)
+	recipeHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 }
 
 func main() {
