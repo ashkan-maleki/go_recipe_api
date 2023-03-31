@@ -20,15 +20,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	redisStore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/mamalmaleki/go_recipe_api/handlers"
+	"github.com/mamalmaleki/go_recipe_api/users"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 )
 
+var authHandler *handlers.AuthHandler
 var recipeHandler *handlers.RecipesHandler
 
 // mongodb://admin:password@127.0.0.1:27017/
@@ -83,17 +87,37 @@ func init() {
 	status := redisClient.Ping(ctx)
 	log.Println(status)
 	recipeHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+
+	collectionUsers := client.Database(mongoDatabase).Collection("users")
+	authHandler = handlers.NewAuthHandler(ctx, collectionUsers)
+
+	userContext := users.NewUserContext(ctx, collectionUsers)
+	userContext.SetUp()
 }
 
 func main() {
 	router := gin.Default()
+
+	store, _ := redisStore.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+
+	router.Use(sessions.Sessions("recipes_api", store))
+
+	router.POST("/sign-in", authHandler.SignInHandler)
+	router.POST("/sign-out", authHandler.SignOutHandler)
+	router.POST("/refresh", authHandler.RefreshHandler)
 	router.GET("/", recipeHandler.IndexHandler)
-	router.POST("/recipes", recipeHandler.NewRecipeHandler)
-	router.GET("/recipes", recipeHandler.ListRecipeHandler)
-	router.PUT("/recipes/:id", recipeHandler.UpdateRecipeHandler)
-	router.DELETE("/recipes/:id", recipeHandler.DeleteRecipeHandler)
-	router.GET("/recipes/:id", recipeHandler.GetRecipeHandler)
-	router.GET("/recipes/search", recipeHandler.SearchRecipeHandler)
+
+	authorized := router.Group("/")
+	authorized.Use(authHandler.AuthMiddleware())
+	{
+		authorized.POST("/recipes", recipeHandler.NewRecipeHandler)
+		authorized.GET("/recipes", recipeHandler.ListRecipeHandler)
+		authorized.PUT("/recipes/:id", recipeHandler.UpdateRecipeHandler)
+		authorized.DELETE("/recipes/:id", recipeHandler.DeleteRecipeHandler)
+		authorized.GET("/recipes/:id", recipeHandler.GetRecipeHandler)
+		authorized.GET("/recipes/search", recipeHandler.SearchRecipeHandler)
+	}
+
 	router.Run()
 	fmt.Println("serving on http://localhost:8080/")
 }
