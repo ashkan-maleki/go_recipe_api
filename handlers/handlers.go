@@ -41,9 +41,10 @@ func NewRecipesHandler(ctx context.Context,
 //	'200':
 //	    description: Successful operation
 func (handler *RecipesHandler) IndexHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "hello world",
-	})
+	//c.JSON(http.StatusOK, gin.H{
+	//	"message": "hello world",
+	//})
+	c.File("web/index.html")
 }
 
 // swagger:operation GET /recipes recipes listRecipes

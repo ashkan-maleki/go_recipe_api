@@ -152,6 +152,53 @@
           }
         ]
       }
+    },
+    "/refresh": {
+      "post": {
+        "description": "Refresh token",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "refresh"
+      }
+    },
+    "/sign-in": {
+      "post": {
+        "description": "Login with username and password",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signIn",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Password",
+            "name": "password",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Username",
+            "name": "username",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/signout": {
+      "post": {
+        "description": "Signing out",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signOut"
+      }
     }
   },
   "definitions": {
@@ -184,7 +231,14 @@
           "x-go-name": "Tags"
         }
       },
-      "x-go-package": "github.com/mamalmaleki/go_recipe_api"
+      "x-go-package": "github.com/mamalmaleki/go_recipe_api/models"
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
     }
   }
 }

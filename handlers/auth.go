@@ -33,6 +33,17 @@ type JWTOutput struct {
 	Expires time.Time `json:"expires"`
 }
 
+// swagger:operation POST /sign-in auth signIn
+// Login with username and password
+// ---
+// produces:
+// - application/json
+// responses:
+//
+//	'200':
+//	    description: Successful operation
+//	'401':
+//	    description: Invalid credentials
 func (handler *AuthHandler) SignInHandler(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -83,6 +94,17 @@ func (handler *AuthHandler) SignInHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User signed in"})
 }
 
+// swagger:operation POST /refresh auth refresh
+// Refresh token
+// ---
+// produces:
+// - application/json
+// responses:
+//
+//	'200':
+//	    description: Successful operation
+//	'401':
+//	    description: Invalid credentials
 func (handler *AuthHandler) RefreshHandler(c *gin.Context) {
 	tokenValue := c.GetHeader("Authorization")
 	claims := &Claims{}
@@ -152,6 +174,13 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
+// swagger:operation POST /signout auth signOut
+// Signing out
+// ---
+// responses:
+//
+//	'200':
+//	    description: Successful operation
 func (handler *AuthHandler) SignOutHandler(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Clear()
